@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+
+  "name": "One-click Gmail Compose",
+  "description": "This extension allow you to send mail quickly at 1 click.",
+  "version": "0.1",
+
+  "browser_action": {
+    "default_icon": "images/googlemail-32.png",
+    "default_popup": "popup.html"
+  },
+
+  "permissions": [
+	"identity",
+	"tabs", 
+    "https://mail.google.com/",
+    "https://www.google.com/accounts/OAuthGetRequestToken",
+    "https://www.google.com/accounts/OAuthAuthorizeToken",
+    "https://www.google.com/accounts/OAuthGetAccessToken",
+    "storage"
+  ],
+  
+  "oauth2": {
+    "client_id": "140036326041-l2mt34sna0ugvbivqdb0r2kenv9teedh.apps.googleusercontent.com",
+    "scopes": [
+      "https://mail.google.com/",
+	  "https://www.googleapis.com/auth/gmail.compose",
+	  "profile"
+    ]
+  }
+}
+
+

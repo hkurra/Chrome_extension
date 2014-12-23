@@ -1,0 +1,76 @@
+    <!doctype html>
+    <html>
+      <head>
+        <title>Getting Started Extension's Popup</title>
+        <style>
+          body {
+            min-width: 357px;
+            overflow-x: hidden;
+          }
+
+          img {
+            margin: 5px;
+            border: 2px solid black;
+            vertical-align: middle;
+            width: 75px;
+            height: 75px;
+          }
+            
+        #progressInfo_bar > svg {
+            display: block;
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 1px;
+        }
+            
+        #progressInfo_bar {
+            
+        }
+            
+                
+        </style>
+
+        <!--
+          - JavaScript and HTML must be in separate files: see our Content Security
+          - Policy documentation[1] for details and explanation.
+          -
+          - [1]: http://developer.chrome.com/extensions/contentSecurityPolicy.html
+         -->
+          
+          
+        <script src="js/popup.js"></script>
+        <script src="js/bundle.js"></script>
+        <script src="js/progressbar.js"></script>
+      </head>
+      <body>
+        <form>
+            <fieldset>
+                <legend>Login Info:</legend>
+                    <div id="login_area"> 
+                        <button type="button" id="login_btn">Login</button>
+                    </div>
+            </fieldset>
+            <div id="progressInfo">
+                <div id="progressInfo_bar"></div>
+<!--                <div id="progressInfo_text" style="float: left;"></div>-->
+            </div>
+            <fieldset id="send_mail_field">
+                <legend>Send mail:</legend>
+                    To:<br>
+                    <input type="email" name="to" id="id_to">
+                    <br>
+                    Subject:<br>
+                    <input type="text" name="subject" id="id_subject">
+                    <br>
+                    Body:<br>
+                    <textarea name="Body" rows="10" cols="30" id="id_body">
+                    </textarea>
+                    <br><br>
+                    <input type="button" value="Send" id="send">
+                    
+                    <button type="button" id="maximize">Maximize</button>
+            </fieldset>
+        </form>
+      </body>
+    </html>
+
