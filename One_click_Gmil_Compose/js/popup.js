@@ -1,10 +1,10 @@
+var contacts = [];
 var sendXHRReq;
-var contacts = null;
 var MailComposer;
 var accessToken;
 var customProgressBar;
-var progressBarDiv ;
-var storageKeyArr = ["profilePic", "profileName"];
+var progressBarDiv;
+var storageKeyArr = ["profilePic", "profileName", "contactsArr"];
 var restApiBaseURL = 'https://www.googleapis.com/';
 var clientKeyQuery = '?key={140036326041-l2mt34sna0ugvbivqdb0r2kenv9teedh.apps.googleusercontent.com}';
 
@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
           .addEventListener("click", login, false);
 	document.getElementById("send")
           .addEventListener("click", sendMail, false);
-		  
+    
+    /*document.getElementById("maximize")
+          .addEventListener("click", getContacts, false);*/
+      
 	MailComposer = require("mailcomposer").MailComposer;
     progressBarDiv = document.getElementById("progressInfo_bar");
     customProgressBar = new ProgressBar.Line(progressBarDiv, {
@@ -36,12 +39,21 @@ function startUpLogin() {
                     
                 var imgUrl = result.profilePic;
                 var profileNameTxt = result.profileName;
+                var contactList = result.contactsArr.slice();
                 
                 console.log(imgUrl);
                 if (imgUrl == 'undefined' || imgUrl == null) {
                     console.log(imgUrl);
                     login();
                     return;
+                }
+                if (contacts == null) {
+                    getContacts();
+                }
+                
+                //I dont know why copy & deep copy using slice not working thts why i have to manually deep copy 
+                for (var j = 0; j < contactList.length; j++){
+                    contacts.push(contactList[j]);
                 }
                 document.getElementById("login_btn").remove();
                 addLoginElement(imgUrl, profileNameTxt);
@@ -65,15 +77,19 @@ function addLoginElement(profilePicImage, profileName) {
             
 function login() {
 
+    customProgressBar.animate(.2);
     chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
 
         //TODO start some progrees indication in UI
         if(token == 'undefined' || token == null) {
             console.log('fail to login please contact vendor or check your internet connection');
             //TODO show alert here
+            completeProgressBarWithColor('#FB0612');
             return;
         }
-
+        
+        customProgressBar.animate(.3);
+        
         console.log(token);
         accessToken = token;
         var xhr = new XMLHttpRequest();
@@ -89,11 +105,14 @@ function login() {
                 var userEmailAddress = jsonResponse.emailAddress;
                 console.log(userEmailAddress);
                 document.getElementById("send").disabled = false;
+                
+                completeProgressBarWithColor('#47F558');
             }
         }; 
 
         xhr.onerror = function() {
             //TODO show alert 
+            completeProgressBarWithColor('#FB0612');
             console.log('dont have gmail access');
         }
         xhr.send();
@@ -101,7 +120,7 @@ function login() {
         //google plus profile get
         var xhrp = new XMLHttpRequest();
         var GPlusProfileRestUrl = restApiBaseURL+'plus/v1/people/me'+clientKeyQuery;  
-
+        
         xhrp.open("get", GPlusProfileRestUrl, true);
         xhrp.setRequestHeader('Authorization', 'Bearer ' + accessToken);
         xhrp.onload  = function() {
@@ -112,24 +131,29 @@ function login() {
 
                 var name = jsonResponse.displayName;
                 console.log(name);
-
+                
+                customProgressBar.animate(.7);
                 var imageUrl = jsonResponse.image.url;
                 console.log(imageUrl);
                 document.getElementById("login_btn").remove();
-
-                var serilizeValue = {'profilePic': imageUrl, 'profileName': name};
+                
+                var serilizeValue = {'profilePic': imageUrl, 'profileName': name };
                 chrome.storage.local.set(serilizeValue, function() {
                     console.log('store content '+chrome.runtime.lastError );
                 });
                 //TODO END PROGRESS INDICATION HERE
                 addLoginElement(imageUrl, name);
+                completeProgressBarWithColor('#47F558');
           }
         }; 
 
         xhrp.onerror = function() {
             console.log('err');
+            completeProgressBarWithColor('#FB0612');
         }
         xhrp.send();
+        customProgressBar.animate(.5);
+        getContacts();
     });
 }
 
@@ -161,13 +185,16 @@ function sendRequest() {
         //TODO SHOW eRROR SENDING MESSAGE IN UI OR PROGRESS INFO
         //if message is invalid credential than revoke access immediatly 
 		var textResponse = sendReq.responseText;  
-		var jsonResponse = JSON.parse(textResponse);
-		console.log(jsonResponse);
+        
+        if (textResponse != null && textResponse != "") {
+            var jsonResponse = JSON.parse(textResponse);
+            console.log(jsonResponse);
+        }
     }
     
     document.getElementById("send_mail_field").disabled = false;
     customProgressBar.animate(1, { 
-        duration: 1200,
+        duration: progressDuration,
         from: { color: '#FCB03C' },
         to: { color: progressColor },
         step: function(state, line) {
@@ -191,7 +218,6 @@ function sendMail() {
     if(to_val == null || to_val == "") {
         alert("Invalid value");
         document.getElementById("send_mail_field").disabled = false;
-        customProgressBar.destroy();
         return;
     }
     var atpos = to_val.indexOf("@");
@@ -213,14 +239,18 @@ function sendMail() {
 		to: to_val,
 		subject: subject_val,
 		body: body_val
+        //html: body_val
 	});
 	
     customProgressBar.animate(0.1);
 	mailcomposer.buildMessage(function(err, messageSource) {
         //TODO MESSAGE BUILD SUCCESSFULLY SHOW IN PROGESS INFO DEPENDING UPON VALUE OF ERR
         console.log(err || messageSource);
-        var rawM = btoa(unescape( encodeURIComponent(messageSource)));
-        console.log(rawM);
+        var rawM = btoa(unescape(encodeURIComponent(messageSource)));
+        console.log('before url safe'+rawM);
+        //to make url safe base64 encoding
+        rawM = rawM.replace(/\+/g, '-').replace(/\//g, '_');
+        console.log('after url safe'+rawM);
         
         customProgressBar.animate(0.5);
 
@@ -255,6 +285,74 @@ function resetProgreesBar() {
     });
 }
 
+function getContacts() {
+    var contactsRestUrl = 'https://www.google.com/m8/feeds/contacts/default/full?max-results=1000';//+ clientKeyQuery;
+    
+    var sendContReq = new XMLHttpRequest();
+        
+    sendContReq.open("GET", contactsRestUrl, true);
+    sendContReq.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+    //sendContReq.setRequestHeader('Content-type', 'application/json');
+        
+    sendContReq.onreadystatechange  = function() {
+        
+        if (sendContReq.status == 200 && sendContReq.readyState == 4) {
+            var textResponse = sendContReq.responseText;  
+
+            console.log(textResponse);
+            
+            var parser = new DOMParser();
+            xmlDoc = parser.parseFromString(textResponse, "text/xml");
+            var entries = xmlDoc.getElementsByTagName('feed')[0].getElementsByTagName('entry');
+            for (var i = 0; i < entries.length; i++){
+                var name = entries[i].getElementsByTagName('title')[0].innerHTML;
+                var emails = entries[i].getElementsByTagName('email');
+                for (var j = 0; j < emails.length; j++){
+                    var email = emails[j].attributes.getNamedItem('address').value;
+                    //contacts.push({name: name, email: email});
+                    if(email != null) {
+                        contacts.push(email);
+                    }
+                }
+            }
+            var serilizeContacts =  {'contactsArr' : contacts}
+            chrome.storage.local.set(serilizeContacts, function() {
+                    console.log('store content '+chrome.runtime.lastError );
+            });
+        }
+    };
+
+    sendContReq.onerror = function() {
+         var textResponse = sendContReq.responseText;  
+
+        console.log(textResponse);
+    };
+        
+    sendContReq.send();
+}
+
+
+$(function() {
+    $( "#id_to" ).autocomplete({
+      source: contacts
+    });
+  });
+
+function completeProgressBarWithColor(color) {
+    
+    customProgressBar.animate(1, { 
+        duration: 2000,
+        from: { color: '#FCB03C' },
+        to: { color: color },
+        step: function(state, line) {
+            line.path.setAttribute('stroke', state.color);
+        }
+    }, function() {
+            console.log('Animation has finished');
+            resetProgreesBar();
+        });
+}
 function logoff() {
 //TODO IMPLEMENT REVOKE ACCESS HERE 
+   // chrome.storage.local.removeAll
 }
