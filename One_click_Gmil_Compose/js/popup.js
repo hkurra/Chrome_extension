@@ -4,6 +4,7 @@ var MailComposer;
 var accessToken;
 var customProgressBar;
 var progressBarDiv;
+var detachedLoginButton = null;
 var storageKeyArr = ["profilePic", "profileName", "contactsArr"];
 var restApiBaseURL = 'https://www.googleapis.com/';
 var clientKeyQuery = '?key={140036326041-l2mt34sna0ugvbivqdb0r2kenv9teedh.apps.googleusercontent.com}';
@@ -39,15 +40,15 @@ function startUpLogin() {
                     
                 var imgUrl = result.profilePic;
                 var profileNameTxt = result.profileName;
-                var contactList = result.contactsArr.slice();
+                var contactList = result.contactsArr;
                 
                 console.log(imgUrl);
                 if (imgUrl == 'undefined' || imgUrl == null) {
                     console.log(imgUrl);
-                    login();
+                    //login();
                     return;
                 }
-                if (contacts == null) {
+                if (contactList == null) {
                     getContacts();
                 }
                 
@@ -55,7 +56,9 @@ function startUpLogin() {
                 for (var j = 0; j < contactList.length; j++){
                     contacts.push(contactList[j]);
                 }
-                document.getElementById("login_btn").remove();
+                //document.getElementById("login_btn").remove();
+                
+               detachedLoginButton =  $( "#login_btn" ).detach();
                 addLoginElement(imgUrl, profileNameTxt);
             });
 		}
@@ -63,18 +66,20 @@ function startUpLogin() {
 }
                                      
 function addLoginElement(profilePicImage, profileName) {
-                
+     
+    //TO DO check elemnt are there before adding 
     var loginAreadiv = document.getElementById("login_area");
     var profileImgElm = document.createElement('img');
 
     profileImgElm.setAttribute('src', profilePicImage);
+    profileImgElm.setAttribute('id', 'profile_Pic_Image');
     loginAreadiv.appendChild(profileImgElm);
 
     var pofileNameElm = document.createTextNode(profileName);
-
+    
     loginAreadiv.appendChild(pofileNameElm);
 }
-            
+          
 function login() {
 
     customProgressBar.animate(.2);
@@ -108,6 +113,11 @@ function login() {
                 
                 completeProgressBarWithColor('#47F558');
             }
+            
+             else if (xhr.status === 401) {
+                handleUnauthorizedResponse(accessToken, true);
+                completeProgressBarWithColor('#FB0612');
+            }
         }; 
 
         xhr.onerror = function() {
@@ -135,16 +145,20 @@ function login() {
                 customProgressBar.animate(.7);
                 var imageUrl = jsonResponse.image.url;
                 console.log(imageUrl);
-                document.getElementById("login_btn").remove();
+                //document.getElementById("login_btn").remove();
+                detachedLoginButton = $( "#login_btn" ).detach();
                 
                 var serilizeValue = {'profilePic': imageUrl, 'profileName': name };
                 chrome.storage.local.set(serilizeValue, function() {
                     console.log('store content '+chrome.runtime.lastError );
                 });
                 //TODO END PROGRESS INDICATION HERE
+                getContacts();
                 addLoginElement(imageUrl, name);
                 completeProgressBarWithColor('#47F558');
           }
+            else if (xhrp.status === 401) {
+            }
         }; 
 
         xhrp.onerror = function() {
@@ -153,7 +167,6 @@ function login() {
         }
         xhrp.send();
         customProgressBar.animate(.5);
-        getContacts();
     });
 }
 
@@ -172,13 +185,11 @@ function sendRequest() {
 		console.log(jsonResponse);
     }
     
-    else if (this.status === 401) {
+    else if (sendReq.readyState == 4 && this.status === 401) {
           // This status may indicate that the cached
           // access token was invalid. Retry once with
           // a fresh token.
-          chrome.identity.removeCachedAuthToken(
-              { 'token': accessToken },
-              login);
+        handleUnauthorizedResponse(accessToken, false);
         }
     else if(sendReq.status != 200) {
 		
@@ -286,13 +297,12 @@ function resetProgreesBar() {
 }
 
 function getContacts() {
-    var contactsRestUrl = 'https://www.google.com/m8/feeds/contacts/default/full?max-results=1000';//+ clientKeyQuery;
+    var contactsRestUrl = 'https://www.google.com/m8/feeds/contacts/default/full?max-results=10000';
     
     var sendContReq = new XMLHttpRequest();
         
     sendContReq.open("GET", contactsRestUrl, true);
     sendContReq.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-    //sendContReq.setRequestHeader('Content-type', 'application/json');
         
     sendContReq.onreadystatechange  = function() {
         
@@ -301,6 +311,9 @@ function getContacts() {
 
             console.log(textResponse);
             
+            while(contacts.length > 0) {
+                contacts.pop();
+            }
             var parser = new DOMParser();
             xmlDoc = parser.parseFromString(textResponse, "text/xml");
             var entries = xmlDoc.getElementsByTagName('feed')[0].getElementsByTagName('entry');
@@ -331,10 +344,41 @@ function getContacts() {
     sendContReq.send();
 }
 
-
+      
 $(function() {
-    $( "#id_to" ).autocomplete({
-      source: contacts
+    function split( val ) {
+      return val.split( /,\s*/ );
+    }
+    function extractLast( term ) {
+      return split( term ).pop();
+    }
+    
+    $( "#id_to" ).bind( "keydown", function( event ) {
+        if ( event.keyCode === $.ui.keyCode.TAB &&
+            $( "#id_to" ).autocomplete( "instance" ).menu.active ) {
+          event.preventDefault();
+        }
+      }).autocomplete({
+        source: function( request, response ) {
+          // delegate back to autocomplete, but extract the last term
+          response( $.ui.autocomplete.filter(
+            contacts, extractLast( request.term ) ) );
+        },
+        focus: function() {
+              // prevent value inserted on focus
+         return false;
+        },
+        select: function( event, ui ) {
+          var terms = split( this.value );
+          // remove the current input
+          terms.pop();
+          // add the selected item
+          terms.push( ui.item.value );
+          // add placeholder to get the comma-and-space at the end
+          terms.push( "" );
+          this.value = terms.join( ", " );
+          return false;
+        }
     });
   });
 
@@ -352,7 +396,35 @@ function completeProgressBarWithColor(color) {
             resetProgreesBar();
         });
 }
-function logoff() {
-//TODO IMPLEMENT REVOKE ACCESS HERE 
-   // chrome.storage.local.removeAll
+
+function handleUnauthorizedResponse(problamaticToken, doLogin) {
+    
+    if (doLogin) {
+        chrome.identity.removeCachedAuthToken (
+            { token: problamaticToken },
+            login);
+    }
+    
+    else {
+        logoff(false, problamaticToken);
+    }
+}
+
+function logoff(doOnServer, tokenToRevoke) {
+    
+    chrome.identity.removeCachedAuthToken (
+    { token: tokenToRevoke },
+        function () {
+            $("#login_area").empty();
+            if (detachedLoginButton != null) {
+                detachedLoginButton.appendTo($("#login_area"));
+            }
+            if (doOnServer) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'https://accounts.google.com/o/oauth2/revoke?token=' +
+                       tokenToRevoke);
+                xhr.send();
+            }
+        }
+    );  
 }
