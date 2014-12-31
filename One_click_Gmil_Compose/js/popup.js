@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
           .addEventListener("click", sendMail, false);
     
     /*document.getElementById("maximize")
-          .addEventListener("click", getContacts, false);*/
+          .addEventListener("click", contacts, false);*/
       
 	MailComposer = require("mailcomposer").MailComposer;
     progressBarDiv = document.getElementById("progressInfo_bar");
@@ -48,8 +48,12 @@ function startUpLogin() {
                     //login();
                     return;
                 }
-                if (contactList == null) {
-                    getContacts();
+                if (contactList == null || contactList.length == 0) {
+                    getContacts(accessToken, function(newContacts) {
+                        for (var j = 0; j < newContacts.length; j++){
+                            contacts.push(newContacts[j]);
+                        }
+                    });
                 }
                 
                 //I dont know why copy & deep copy using slice not working thts why i have to manually deep copy 
@@ -153,7 +157,11 @@ function login() {
                     console.log('store content '+chrome.runtime.lastError );
                 });
                 //TODO END PROGRESS INDICATION HERE
-                getContacts();
+                getContacts(accessToken, function(newContacts) {
+                        for (var j = 0; j < newContacts.length; j++) {
+                            contacts.push(newContacts[j]);
+                        }
+                });
                 addLoginElement(imageUrl, name);
                 completeProgressBarWithColor('#47F558');
           }
@@ -294,54 +302,6 @@ function resetProgreesBar() {
     customProgressBar = new ProgressBar.Line(progressBarDiv, {
         color: '#FCB03C'
     });
-}
-
-function getContacts() {
-    var contactsRestUrl = 'https://www.google.com/m8/feeds/contacts/default/full?max-results=10000';
-    
-    var sendContReq = new XMLHttpRequest();
-        
-    sendContReq.open("GET", contactsRestUrl, true);
-    sendContReq.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-        
-    sendContReq.onreadystatechange  = function() {
-        
-        if (sendContReq.status == 200 && sendContReq.readyState == 4) {
-            var textResponse = sendContReq.responseText;  
-
-            console.log(textResponse);
-            
-            while(contacts.length > 0) {
-                contacts.pop();
-            }
-            var parser = new DOMParser();
-            xmlDoc = parser.parseFromString(textResponse, "text/xml");
-            var entries = xmlDoc.getElementsByTagName('feed')[0].getElementsByTagName('entry');
-            for (var i = 0; i < entries.length; i++){
-                var name = entries[i].getElementsByTagName('title')[0].innerHTML;
-                var emails = entries[i].getElementsByTagName('email');
-                for (var j = 0; j < emails.length; j++){
-                    var email = emails[j].attributes.getNamedItem('address').value;
-                    //contacts.push({name: name, email: email});
-                    if(email != null) {
-                        contacts.push(email);
-                    }
-                }
-            }
-            var serilizeContacts =  {'contactsArr' : contacts}
-            chrome.storage.local.set(serilizeContacts, function() {
-                    console.log('store content '+chrome.runtime.lastError );
-            });
-        }
-    };
-
-    sendContReq.onerror = function() {
-         var textResponse = sendContReq.responseText;  
-
-        console.log(textResponse);
-    };
-        
-    sendContReq.send();
 }
 
       
