@@ -23,6 +23,11 @@ document.addEventListener('DOMContentLoaded', function () {
     customProgressBar = new ProgressBar.Line(progressBarDiv, {
         color: '#FCB03C'
     });
+    
+    $("#option_div").click(function() {
+        console.log('clicked me')
+        chrome.tabs.create({url:"options.html?ref=popup"});
+    });
     startUpLogin();
 });
 

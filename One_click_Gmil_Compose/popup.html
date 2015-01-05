@@ -8,8 +8,11 @@
             overflow-x: hidden;
           }
 
-          img {
-            margin: 5px;
+            #login_fileldset {
+                margin-top: 10px;
+            }
+          #login_area img {
+            margin: 7px;
             border: 2px solid black;
             vertical-align: middle;
             width: 75px;
@@ -25,6 +28,13 @@
             
         #progressInfo_bar {
             
+        }
+            
+        #option_div img {
+            position: absolute;
+            top: 0px;
+            right: 10px;
+            margin-bottom: 10px;
         }
             
                 
@@ -49,13 +59,18 @@
           
       </head>
       <body>
+          <div id="option_div" >
+            <img src="images/optionb16.png"/>
+          </div>
         <form>
-            <fieldset>
-                <legend>Login Info:</legend>
-                    <div id="login_area"> 
-                        <button type="button" id="login_btn">Login</button>
-                    </div>
-            </fieldset>
+            <div>
+                <fieldset id="login_fileldset">
+                    <legend>Login Info:</legend>
+                        <div id="login_area"> 
+                            <button type="button" id="login_btn">Login</button>
+                        </div>
+                </fieldset>
+            </div>
             <div id="progressInfo">
                 <div id="progressInfo_bar"></div>
 <!--                <div id="progressInfo_text" style="float: left;"></div>-->
