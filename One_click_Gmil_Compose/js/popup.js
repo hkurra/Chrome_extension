@@ -4,6 +4,7 @@ var MailComposer;
 var accessToken;
 var customProgressBar;
 var progressBarDiv;
+var loginInProcess= false;
 var detachedLoginButton = null;
 var storageKeyArr = ["profilePic", "profileName", "contactsArr"];
 var restApiBaseURL = 'https://www.googleapis.com/';
@@ -36,6 +37,7 @@ function startUpLogin() {
     chrome.identity.getAuthToken({ 'interactive': false }, function(token) {
 		if( token == 'undefined' || token == null) {
 			document.getElementById("send").disabled = true;
+            document.getElementById("login_btn").disabled = false;
 		}
 		else {               
             accessToken = token;
@@ -90,7 +92,9 @@ function addLoginElement(profilePicImage, profileName) {
 }
           
 function login() {
-
+    if (loginInProcess == true) return;
+    
+    loginInProcess = true;
     customProgressBar.animate(.2);
     chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
 
@@ -99,6 +103,7 @@ function login() {
             console.log('fail to login please contact vendor or check your internet connection');
             //TODO show alert here
             completeProgressBarWithColor('#FB0612');
+            loginInProcess = false;
             return;
         }
         
@@ -131,6 +136,7 @@ function login() {
 
         xhr.onerror = function() {
             //TODO show alert 
+            loginInProcess = false;
             completeProgressBarWithColor('#FB0612');
             console.log('dont have gmail access');
         }
@@ -156,6 +162,7 @@ function login() {
                 console.log(imageUrl);
                 //document.getElementById("login_btn").remove();
                 detachedLoginButton = $( "#login_btn" ).detach();
+                loginInProcess = false;
                 
                 var serilizeValue = {'profilePic': imageUrl, 'profileName': name };
                 chrome.storage.local.set(serilizeValue, function() {
@@ -175,6 +182,7 @@ function login() {
         }; 
 
         xhrp.onerror = function() {
+            loginInProcess = false;
             console.log('err');
             completeProgressBarWithColor('#FB0612');
         }
@@ -383,6 +391,7 @@ function logoff(doOnServer, tokenToRevoke) {
             $("#login_area").empty();
             if (detachedLoginButton != null) {
                 detachedLoginButton.appendTo($("#login_area"));
+                detachedLoginButton.prop( "disabled", false );
             }
             if (doOnServer) {
                 var xhr = new XMLHttpRequest();
