@@ -15,9 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
           .addEventListener("click", login, false);
 	document.getElementById("send")
           .addEventListener("click", sendMail, false);
-    
-    /*document.getElementById("maximize")
-          .addEventListener("click", contacts, false);*/
       
 	MailComposer = require("mailcomposer").MailComposer;
     progressBarDiv = document.getElementById("progressInfo_bar");
@@ -52,7 +49,7 @@ function startUpLogin() {
                 console.log(imgUrl);
                 if (imgUrl == 'undefined' || imgUrl == null) {
                     console.log(imgUrl);
-                    //login();
+                    login();
                     return;
                 }
                 if (contactList == null || contactList.length == 0) {
@@ -66,9 +63,7 @@ function startUpLogin() {
                 //I dont know why copy & deep copy using slice not working thts why i have to manually deep copy 
                 for (var j = 0; j < contactList.length; j++){
                     contacts.push(contactList[j]);
-                }
-                //document.getElementById("login_btn").remove();
-                
+                }                
                detachedLoginButton =  $( "#login_btn" ).detach();
                 addLoginElement(imgUrl, profileNameTxt);
             });
@@ -98,10 +93,8 @@ function login() {
     customProgressBar.animate(.2);
     chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
 
-        //TODO start some progrees indication in UI
         if(token == 'undefined' || token == null) {
             console.log('fail to login please contact vendor or check your internet connection');
-            //TODO show alert here
             completeProgressBarWithColor('#FB0612');
             loginInProcess = false;
             return;
@@ -135,7 +128,6 @@ function login() {
         }; 
 
         xhr.onerror = function() {
-            //TODO show alert 
             loginInProcess = false;
             completeProgressBarWithColor('#FB0612');
             console.log('dont have gmail access');
@@ -162,7 +154,6 @@ function login() {
                 console.log(imageUrl);
                 //document.getElementById("login_btn").remove();
                 detachedLoginButton = $( "#login_btn" ).detach();
-                loginInProcess = false;
                 
                 var serilizeValue = {'profilePic': imageUrl, 'profileName': name };
                 chrome.storage.local.set(serilizeValue, function() {
@@ -170,15 +161,18 @@ function login() {
                 });
                 //TODO END PROGRESS INDICATION HERE
                 getContacts(accessToken, function(newContacts) {
-                        for (var j = 0; j < newContacts.length; j++) {
-                            contacts.push(newContacts[j]);
-                        }
+                    for (var j = 0; j < newContacts.length; j++) {
+                        contacts.push(newContacts[j]);
+                    }
                 });
                 addLoginElement(imageUrl, name);
                 completeProgressBarWithColor('#47F558');
           }
             else if (xhrp.status === 401) {
+                handleUnauthorizedResponse(accessToken, true);
+                completeProgressBarWithColor('#FB0612');
             }
+            loginInProcess = false;
         }; 
 
         xhrp.onerror = function() {
@@ -215,7 +209,6 @@ function sendRequest() {
     else if(sendReq.status != 200) {
 		
         //TODO SHOW eRROR SENDING MESSAGE IN UI OR PROGRESS INFO
-        //if message is invalid credential than revoke access immediatly 
 		var textResponse = sendReq.responseText;  
         
         if (textResponse != null && textResponse != "") {
@@ -305,7 +298,6 @@ function sendMail() {
         customProgressBar.animate(.65, { 
             duration: 400
         });
-        //TODO SENDING MESSAGE SHOW IN PROGESS  & HANDLE NETWORK NOT AVAILABLE ERROR
     });
 
 }
@@ -377,14 +369,12 @@ function handleUnauthorizedResponse(problamaticToken, doLogin) {
             { token: problamaticToken },
             login);
     }
-    
     else {
         logoff(false, problamaticToken);
     }
 }
 
 function logoff(doOnServer, tokenToRevoke) {
-    
     chrome.identity.removeCachedAuthToken (
     { token: tokenToRevoke },
         function () {
