@@ -49,6 +49,7 @@ function startUpLogin() {
                 console.log(imgUrl);
                 if (imgUrl == 'undefined' || imgUrl == null) {
                     console.log(imgUrl);
+                    document.getElementById("login_btn").disabled = false;
                     login();
                     return;
                 }
