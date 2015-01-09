@@ -2,7 +2,7 @@
     "manifest_version": 2,
 
     "name": "One-click Gmail Compose",
-    "description": "This extension allow you to send mail quickly at 1 click.",
+    "description": "This extension allow you to send mail quickly at One click.",
     "version": "0.1",
     "key":      "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5mAB2A5oJPlqyevEEmppdBdD2GsaP0ASeE3B/JffY8nsRoRMar1Wyvj+7IRu6dFfV/5W3xmD0bKpRtrjEVzrf/ToZsGQqjgiDJRECojvRZQvIND1dE7afsqHum0Czwr1XCozZMw93su6BVg0NM7E1XE3QdmRi8wpI7wmra7WQbhaW7rdrRhMjvkkkjCwvVTX9sXp8YUhMUgpgxU0i/L8zyxfC6V1pQfQWtc8S4jwf9Mu+z4/UKR2Xls3si+ZUiZf+3hZs1LVNTEK12gWK+IvSVnUrPjwuCc98QDved0pvGKvR3HK5wLa1wvE2/NEFwPTwNyTHk/suUvil4SaeW2z5wIDAQAB",
     "browser_action": {
