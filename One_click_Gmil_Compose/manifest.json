@@ -18,6 +18,9 @@
       "48": "images/icon48.png"
    },
     "options_page": "options.html",
+    "background": {
+		"page": "background.html"
+	},
     
     "permissions": [
         "identity",
@@ -28,7 +31,8 @@
         "https://www.google.com/accounts/OAuthAuthorizeToken",
         "https://www.google.com/accounts/OAuthGetAccessToken",
         "https://accounts.google.com/o/oauth2/revoke",
-        "storage"
+        "storage",
+        "contextMenus"
     ],
   
     "oauth2": {

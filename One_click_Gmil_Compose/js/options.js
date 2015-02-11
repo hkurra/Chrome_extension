@@ -69,6 +69,8 @@ function updateContact() {
                 updatedCount = 'some';
             }
             
+            var BGPage = chrome.extension.getBackgroundPage();
+            BGPage.addContextMenu();
             alert(updatedCount +' contacts '+msgString);
         });
     });

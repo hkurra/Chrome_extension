@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
         color: '#FCB03C'
     });
     
+    
     $("#option_div").click(function() {
         console.log('clicked me')
         chrome.tabs.create({url:"options.html?ref=popup"});
@@ -58,6 +59,8 @@ function startUpLogin() {
                         for (var j = 0; j < newContacts.length; j++){
                             contacts.push(newContacts[j]);
                         }
+                        var BGPage = chrome.extension.getBackgroundPage();
+                        BGPage.addContextMenu();
                     });
                 }
                 
@@ -165,6 +168,8 @@ function login() {
                     for (var j = 0; j < newContacts.length; j++) {
                         contacts.push(newContacts[j]);
                     }
+                    var BGPage = chrome.extension.getBackgroundPage();
+                    BGPage.addContextMenu();
                 });
                 addLoginElement(imageUrl, name);
                 completeProgressBarWithColor('#47F558');
