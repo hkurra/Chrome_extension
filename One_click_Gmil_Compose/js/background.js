@@ -33,6 +33,7 @@ addContextMenu = function() {
 	});
 	
 	readContactsFromStorage(function(newContacts) {
+		newContacts.sort();
 		for (var j = 0; j < newContacts.length; j++){
 			chrome.contextMenus.create({
 				"id": newContacts[j],
@@ -45,6 +46,7 @@ addContextMenu = function() {
 	});
 	
 	readContactsFromStorage(function(newContacts) {
+		newContacts.sort();
 		for (var j = 0; j < newContacts.length; j++){
 			chrome.contextMenus.create({
 				"id": newContacts[j]+j,
@@ -127,9 +129,6 @@ function sendRequest() {
 		setProgressInfo(mailSendingState.send);
 	}
 
-	else if (sendReq.readyState == 4 && this.status === 401) {
-		setProgressInfo(mailSendingState.fail);
-	}
 	else if(sendReq.status != 200) {
 		
 		setProgressInfo(mailSendingState.fail);
@@ -216,7 +215,7 @@ setProgressInfo = function (type) {
 		case mailSendingState.send:
 			{
 			bColor = '#47F558';
-			msg = "SEND";
+			msg = "Send";
 			break;
 			}
 			
@@ -230,7 +229,7 @@ setProgressInfo = function (type) {
 		case mailSendingState.sending:
 			{
 			bColor = '#FCB03C';
-			msg = "sending";
+			msg = ">>>>";
 			break;
 			}
 	}
